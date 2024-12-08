@@ -82,6 +82,9 @@ def process_task_data(form_data):
     
     return content, category, priority, date_due
 
+with app.app_context():
+    db.create_all()
+
 @app.route('/')
 def index():
     # Get current date for comparisons
