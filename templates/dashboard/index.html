@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>To Doozie App</title>
+{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 mb-3">To Doozie App</h1>
+            <p class="lead text-muted">Organize, track, and complete your tasks efficiently</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Task Status Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Tasks by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Tasks by Priority</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="priorityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Recent Tasks and Actions -->
+    <div class="row">
+        <!-- Quick Actions -->
+        <div class="col-md-3">
+            
+            {% from "components/quick_actions.html" import quick_actions_card %}
+
+            {# Render the quick actions card #}
+            {{ quick_actions_card(quick_actions) }}
+
+            <!-- Category Summary -->
+            <div class="card mt-3">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Categories</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for category, count in categories.items() %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ category|title }}
+                            <span class="badge {% if category == 'work' %}bg-primary
+                                             {% elif category == 'home' %}bg-success
+                                             {% else %}bg-info{% endif %} rounded-pill">{{ count }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Recent Tasks -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Recent Tasks</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_tasks %}
+                        <div class="list-group">
+                            {% for task in recent_tasks %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ task.content }}</h6>
+                                    <small class="text-muted">
+                                        Due: {{ task.date_due.strftime('%Y-%m-%d') if task.date_due }}
+                                    </small>
+                                </div>
+                                <span class="badge bg-{{ 'success' if task.completed else 'primary' }} rounded-pill">
+                                    {{ task.category }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No tasks found</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get data from Flask
+        const stats = {{ stats|tojson|safe }};
+        const categories = {{ categories|tojson|safe }};
+        const priorityDistribution = {{ priority_distribution|tojson|safe }};
+    
+        // Configure charts
+        const chartConfig = {
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        };
+    
+        // Task Status Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Pending', 'Overdue'],
+                datasets: [{
+                    data: [
+                        stats.completed_tasks,
+                        stats.pending_tasks,
+                        stats.overdue
+                    ],
+                    backgroundColor: [
+                        '#28a745',  // Success green
+                        '#17a2b8',  // Info blue
+                        '#dc3545'   // Danger red
+                    ]
+                }]
+            },
+            options: chartConfig
+        });
+    
+        // Category Distribution Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(categories).map(cat => cat.charAt(0).toUpperCase() + cat.slice(1)),
+                datasets: [{
+                    data: Object.values(categories),
+                    backgroundColor: [
+                        '#007bff',  // Primary blue
+                        '#28a745',  // Success green
+                        '#17a2b8'   // Info blue
+                    ]
+                }]
+            },
+            options: chartConfig
+        });
+    
+        // Priority Distribution Chart
+        const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+        new Chart(priorityCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(priorityDistribution).map(p => `Priority ${p}`),
+                datasets: [{
+                    label: 'Number of Tasks',
+                    data: Object.values(priorityDistribution),
+                    backgroundColor: [
+                        '#007bff',
+                        '#28a745',
+                        '#ffc107',
+                        '#dc3545',
+                        '#6c757d'
+                    ]
+                }]
+            },
+            options: {
+                ...chartConfig,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
