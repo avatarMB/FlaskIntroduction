@@ -13,7 +13,7 @@
             <p class="lead text-muted">Organize, track, and complete your tasks efficiently</p>
         </div>
     </div>
-
+    {% if tasks %}
     <div class="row g-4 mb-4">
         <div class="col-md-4">
             <div class="card h-100">
@@ -48,6 +48,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
     <!-- Recent Tasks and Actions -->
     <div class="row">
         <!-- Quick Actions -->
@@ -101,7 +102,11 @@
                             {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-muted">No tasks found</p>
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox display-1 text-muted"></i>
+                        <p class="lead mt-3">No tasks found</p>
+                        <a href="{{ url_for('task') }}" class="btn btn-primary mt-2">Create New Task</a>
+                    </div>
                     {% endif %}
                 </div>
             </div>
