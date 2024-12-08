@@ -86,39 +86,6 @@ with app.app_context():
     db.create_all()
 
 @app.route('/')
-def index():
-    # Get current date for comparisons
-    today = datetime.now().date()
-    
-    # Calculate statistics
-    stats = {
-        'total_tasks': Todo.query.count(),
-        'completed_tasks': Todo.query.filter_by(completed=True).count(),
-        'due_today': Todo.query.filter(
-            db.func.date(Todo.date_due) == today,
-            Todo.completed == False
-        ).count(),
-        'overdue': Todo.query.filter(
-            Todo.date_due < datetime.now(),
-            Todo.completed == False
-        ).count()
-    }
-    
-    # Get recent tasks
-    recent_tasks = Todo.query.order_by(Todo.date_created.desc()).limit(5).all()
-    
-    # Get category counts
-    category_counts = {}
-    for category in ['home', 'work', 'fun']:
-        count = Todo.query.filter_by(category=category).count()
-        if count > 0:
-            category_counts[category] = count
-    
-    return render_template('index.html',
-                         stats=stats,
-                         recent_tasks=recent_tasks,
-                         categories=category_counts)
-
 @app.route('/dashboard')
 def dashboard():
     # Get current date for comparisons
@@ -142,7 +109,9 @@ def dashboard():
     # Get tasks by category
     categories = {}
     for category in VALID_CATEGORIES:
-        categories[category] = Todo.query.filter_by(category=category).count()
+        count = Todo.query.filter_by(category=category).count()
+        if count > 0:
+            categories[category] = count
     
     # Get recent tasks (last 5)
     recent_tasks = Todo.query.order_by(Todo.date_created.desc()).limit(5).all()
@@ -166,7 +135,6 @@ def dashboard():
     
     return render_template(
         'dashboard/index.html',
-        tasks=recent_tasks,
         stats=stats,
         categories=categories,
         recent_tasks=recent_tasks,

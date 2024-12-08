@@ -13,7 +13,7 @@
             <p class="lead text-muted">Organize, track, and complete your tasks efficiently</p>
         </div>
     </div>
-    {% if tasks %}
+  
     <div class="row g-4 mb-4">
         <div class="col-md-4">
             <div class="card h-100">
@@ -48,7 +48,7 @@
             </div>
         </div>
     </div>
-    {% endif %}
+ 
     <!-- Recent Tasks and Actions -->
     <div class="row">
         <!-- Quick Actions -->
@@ -59,6 +59,7 @@
             {# Render the quick actions card #}
             {{ quick_actions_card(quick_actions) }}
 
+           
             <!-- Category Summary -->
             <div class="card mt-3">
                 <div class="card-header bg-light">
@@ -77,6 +78,7 @@
                     </div>
                 </div>
             </div>
+           
         </div>
         <!-- Recent Tasks -->
         <div class="col-md-9">
